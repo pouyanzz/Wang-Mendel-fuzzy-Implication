@@ -235,8 +235,45 @@ class FuzzyModel():
         plt.tight_layout()
         plt.show()
 
+    def train_plot_3d_output(self, test_cases):
+        """Plot the crisp outputs from test cases in a 3D plot."""
+        
+        # Extracting x1 and x2 values and corresponding outputs
+        x1_values = [case[0] for case in test_cases]
+        x2_values = [case[1] for case in test_cases]
+        actual_output = [case[2] for case in test_cases]
+        
+        # Assuming predictions is already calculated in your main code
+        predictions = []
+        targets = []
+        for input_value_x1, input_value_x2, actual_output in zip(x1_values, x2_values, actual_output):
+            memberships_x1 = self.fuzzify_input(input_value_x1,self.input_fuzzy_sets_x1)
+            memberships_x2 = self.fuzzify_input(input_value_x2,self.input_fuzzy_sets_x2)
+            output_memberships = self.evaluate_rules(memberships_x1,memberships_x2)
+            crisp_output = self.defuzzify_center_of_average(output_memberships)
+            predictions.append(crisp_output)
+            targets.append(actual_output)
+        # Create a meshgrid for plotting
+        mse = model.calculate_mse(predictions, targets)
+        print(f"Mean Squared Error (MSE): {mse}")
+        X1_grid, X2_grid = np.meshgrid(np.unique(x1_values), np.unique(x2_values))
+        
+        # Reshape predictions to match the meshgrid shape
+        Z_grid = np.array(predictions).reshape(X1_grid.shape)
 
-
+        # Create a 3D plot
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        ax.plot_surface(X1_grid, X2_grid, Z_grid, cmap='viridis', edgecolor='none')
+        
+        ax.set_title(f'Crisp Output Surface Plot, MSE: {mse}')
+        ax.set_xlabel('x1')
+        ax.set_ylabel('x2')
+        ax.set_zlabel('Crisp Output')
+        
+        plt.show()
+        
 if __name__ == "__main__":
     data = pd.read_csv("training_data.csv")
     data= data.to_records(index=False)
@@ -255,34 +292,7 @@ if __name__ == "__main__":
     test_cases = pd.read_csv("test_data.csv")
     test_cases = test_cases.to_records(index=False)
 
-    # List to store predictions
-    predictions = []
-    targets = []
-
-    for i, (input_value_x1, input_value_x2, actual_output) in enumerate(test_cases):
-        #print(f"\n--- Test Case {i + 1} ---")
-        #print(f"Input x1: {input_value_x1}, x2: {input_value_x2}, Actual Output: {actual_output}")
-
-        # Fuzzify inputs
-        memberships_x1 = model.fuzzify_input(input_value_x1,x1_fuzzy_set)
-        memberships_x2 = model.fuzzify_input(input_value_x2,x2_fuzzy_set)
-
-
-        # Evaluate rules
-        output_memberships = model.evaluate_rules(memberships_x1, memberships_x2)
-
-        # Defuzzify
-        crisp_output = model.defuzzify_center_of_average(output_memberships)
-
-        # Store predictions and actual outputs
-        predictions.append(crisp_output)
-        targets.append(actual_output)
-
-    # Calculate MSE
-    mse = model.calculate_mse(predictions, targets)
-    print(f"\nMean Squared Error (MSE): {mse}")
 
     model.plot_fuzzy_sets()
-
-
+    model.train_plot_3d_output(test_cases)
 
