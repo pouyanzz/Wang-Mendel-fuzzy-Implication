@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from data_set import generate_data_and_plot
 class FuzzyModel():
     def __init__(self, training_data, num_fuzzy_sets=7):
         """
@@ -254,6 +254,7 @@ class FuzzyModel():
 
         
 if __name__ == "__main__":
+
     data = pd.read_csv("training_data.csv")
     data= data.to_records(index=False)
     model = FuzzyModel(data)

@@ -40,7 +40,7 @@ def generate_data_and_plot(num_points, filename, title, is_training=True):
     ax.set_xlabel('X Axis')
     ax.set_ylabel('Y Axis')
     ax.set_zlabel('Z Axis')
-    plt.title(f'{title} 3D Surface Plot' if is_training else f'{title} Test Data Scatter Plot')
+    plt.title(f'{title} 3D Surface Plot' if is_training else f'{title} Data Scatter Plot')
     plt.savefig(f'{title} {"3D Surface Plot" if is_training else "Test Data Scatter Plot"}.jpg')
 
     plt.show()
