@@ -59,6 +59,8 @@ class FuzzyModel():
         Returns:
             A dynamically generated rule base.
         """
+        
+
         rules = []
 
         for x1, x2, y in training_data:
@@ -281,11 +283,9 @@ def simulated_annealing(model, training_data, initial_temp=0.1, cooling_rate=0.9
     temperature = initial_temp
     
     for iteration in range(max_iterations):
-
-
         new_model = copy.deepcopy(current_model)
-        
 
+        # Perturb fuzzy sets (as in your current implementation)
         choice = random.choice(['input_x1', 'input_x2', 'output'])
         if choice == 'input_x1':
             fuzzy_sets = new_model.input_fuzzy_sets_x1
@@ -293,37 +293,41 @@ def simulated_annealing(model, training_data, initial_temp=0.1, cooling_rate=0.9
             fuzzy_sets = new_model.input_fuzzy_sets_x2
         else:
             fuzzy_sets = new_model.output_fuzzy_sets
-        
+
         label = random.choice(list(fuzzy_sets.keys()))
-        fuzzy_set = list(fuzzy_sets[label])  
-        
-        perturbation_range = 0.1 * (fuzzy_set[2] - fuzzy_set[0])  
+        fuzzy_set = list(fuzzy_sets[label])
+
+        perturbation_range = 0.1 * (fuzzy_set[2] - fuzzy_set[0])
         fuzzy_set[0] += random.uniform(-perturbation_range, perturbation_range)
         fuzzy_set[1] += random.uniform(-perturbation_range, perturbation_range)
         fuzzy_set[2] += random.uniform(-perturbation_range, perturbation_range)
 
-        
-        fuzzy_set[0] = max(fuzzy_set[0], 0)  
-        fuzzy_set[1] = max(fuzzy_set[1], fuzzy_set[0])  
-        fuzzy_set[2] = max(fuzzy_set[2], fuzzy_set[1])  
-        
-        fuzzy_sets[label] = tuple(fuzzy_set)  
+        fuzzy_set[0] = max(fuzzy_set[0], 0)
+        fuzzy_set[1] = max(fuzzy_set[1], fuzzy_set[0])
+        fuzzy_set[2] = max(fuzzy_set[2], fuzzy_set[1])
+
+        fuzzy_sets[label] = tuple(fuzzy_set)
         if iteration % 100 == 0:
             print(f"Iteration {iteration}: Temp={temperature:.4f}, Current MSE={current_mse:.6f}, Best MSE={best_mse:.6f}")
             print(f"Current fuzzy set for {label}: {new_model.input_fuzzy_sets_x1[label]}")
+        # Regenerate the rule base with the updated fuzzy sets
+        new_model.generate_rules(training_data)
+
+        # Evaluate the new model with the updated rule base
         new_mse = evaluate_model(new_model, training_data)
-        
+
+        # Acceptance logic remains the same
         if new_mse < current_mse or random.uniform(0, 1) < acceptance_probability(current_mse, new_mse, temperature):
             current_model = new_model
             current_mse = new_mse
-            
+
             if new_mse < best_mse:
                 best_model = copy.deepcopy(new_model)
                 best_mse = new_mse
-        
-        temperature = initial_temp / ( 1 + cooling_rate * iteration)
-    
+
+        temperature = initial_temp / (1 + cooling_rate * iteration)
     return best_model, best_mse
+
 
 def evaluate_model(model, data):
 
@@ -356,11 +360,12 @@ if __name__ == "__main__":
     print("\nGenerated Rule Base:")
     for rule, output in model.rule_base.items():
         print(f"If x1 is {rule[0]} and x2 is {rule[1]}, then output is {output}")
-    # Perform optimization using Simulated Annealing
+        
     train_mse_before_optimization, predictions, targets, x1_values, x2_values = model.predict(data)
     model.plot_3d_output(train_mse_before_optimization, predictions, targets, x1_values, x2_values,"Train_Before_Optimization")
     optimized_model, best_mse = simulated_annealing(model, data)
-
+    for rule, output in optimized_model.rule_base.items():
+        print(f"If x1 is {rule[0]} and x2 is {rule[1]}, then output is {output}")
     train_mse_after_optimization, predictions, targets, x1_values, x2_values = optimized_model.predict(data)
     optimized_model.plot_3d_output(train_mse_after_optimization, predictions, targets, x1_values, x2_values,"Train_After_Optimization")
 
@@ -401,7 +406,7 @@ if __name__ == "__main__":
         mse = mse + test_mse_optimized
         if(i%99==0):
             optimized_model.plot_3d_output(test_mse_optimized, predictions, targets, x1_values, x2_values,"Test Mse Optimised")
-        
+
     test_mse_optimized = mse/100
     print(f"Best MSE after optimization: {best_mse}")
     print(f"Train MSE Before optimaztion:{train_mse_before_optimization}")
